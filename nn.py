@@ -7,10 +7,10 @@ torch.autograd.set_detect_anomaly(True)
 
 torch.manual_seed(1337)
 
-N = 20
+N = 4
 D = 2
 E = 1
-epsilon = 1e-10  # dogshit over here
+epsilon = 1e-8  # dogshit over here
 
 model = nn.Sequential(
     nn.Linear(D, D * 4),
@@ -30,7 +30,7 @@ def has_nan_params(model):
 
 plt.ion()
 fig, axes = plt.subplots(2, 4)
-plt.show()
+# plt.show()
 
 
 colors = [
@@ -38,10 +38,10 @@ colors = [
     "cyan", "magenta", "yellow", "brown", "pink",
     "gray", "olive", "teal", "navy", "maroon",
     "lime", "indigo", "gold", "coral", "turquoise"
-]
+    ][:N]
 
-axes[1][0].scatter(train_set)
-print(train_set.)
+print(train_set.shape)
+axes[1][0].scatter(*train_set.transpose(0, 1), c=colors)
 
 
 
@@ -51,6 +51,9 @@ while True:
     #     print(parameter)
     # print(torch.any(torch.isnan(model.parameters())))
     embeddings = model(train_set)
+
+    axes[1][1].cla()
+    axes[1][1].scatter(embeddings.detach(), torch.zeros((N,)), c=colors)
 
     # subtract to get side lengths, then square the side lengths, then sum them, then sqrt them
     train_set_distances = ((train_set[:, None] - train_set) ** 2).sum(dim=-1)
@@ -82,11 +85,11 @@ while True:
     train_set_pairs = train_set_distances[:, None] - train_set_distances
     embeddings_pairs = embeddings_distances[:, None] - embeddings_distances
     # print(embeddings_pairs)
-    axes[0].imshow(train_set_pairs.detach() == 0)
-    axes[1].imshow(embeddings_pairs.detach() == 0)
+    axes[0][0].imshow(train_set_pairs.detach() == 0)
+    axes[0][1].imshow(embeddings_pairs.detach() == 0)
 
     loss_values = torch.maximum(embeddings_distances[:, None], embeddings_distances) / torch.minimum(embeddings_distances[:, None], embeddings_distances)
-    axes[2].imshow(loss_values.detach())
+    axes[0][2].imshow(loss_values.detach())
 
     assert not torch.any(loss_values < 0)
 
@@ -96,9 +99,9 @@ while True:
     # EXCLUDE the values where the mask is true
     loss_values[mask] = 0
 
-    axes[3].imshow(loss_values.detach())
+    axes[0][3].imshow(loss_values.detach())
     # plt.show(block=False)
-    plt.pause(0.01)
+    plt.pause(0.001)
 
     loss_values[mask]
 
@@ -110,3 +113,6 @@ while True:
     loss.backward()
     print(loss)
     optimizer.step()
+
+    # if loss.item() < 5:
+    #     plt.show()
